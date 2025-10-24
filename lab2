@@ -1,0 +1,67 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+int main(void) {
+    int n;
+    // Ввод N с простой проверкой
+    if (scanf("%d", &n) != 1) {
+        fprintf(stderr, "Invalid input: expected integer N\n");
+        return 1; // можно считать это ветвлением "ошибка ввода"
+    }
+    if (n <= 0) {
+        printf("NO\n"); // пустой/неположительный массив — условие не выполняется
+        return 0;
+    }
+
+    long long *a = malloc(sizeof(long long) * n);
+    if (!a) {
+        fprintf(stderr, "Memory allocation failed\n");
+        return 1;
+    }
+
+    // Чтение элементов массива с проверкой ввода
+    for (int i = 0; i < n; ++i) {
+        if (scanf("%lld", &a[i]) != 1) {
+            fprintf(stderr, "Invalid input: expected %d integers for array\n", n);
+            free(a);
+            return 1; // ветка "ошибка ввода"
+        }
+    }
+
+    // Построим массив suffix_max: suffix_max[i] = max of a[i+1..n-1],
+    // для позиции n-1 — будем считать "нет справа" и хранить LLONG_MIN.
+    long long *suffix_max = malloc(sizeof(long long) * n);
+    if (!suffix_max) {
+        fprintf(stderr, "Memory allocation failed\n");
+        free(a);
+        return 1;
+    }
+    suffix_max[n-1] = LLONG_MIN;
+    for (int i = n - 2; i >= 0; --i) {
+        long long candidate = a[i+1];
+        long long next = suffix_max[i+1];
+        suffix_max[i] = (candidate > next) ? candidate : next;
+    }
+
+    // Проход слева направо: поддерживаем prefix_min = min of a[0..i-1]
+    long long prefix_min = LLONG_MAX;
+    for (int i = 0; i < n; ++i) {
+        int cond_left  = (i == 0) ? 1 : (a[i] < prefix_min);         // меньше всех слева (или слева нет)
+        int cond_right = (i == n-1) ? 1 : (a[i] > suffix_max[i]);   // больше всех справа (или справа нет)
+        if (cond_left && cond_right) {
+            printf("YES\n%d\n", i + 1); // индекс 1-based
+            free(a);
+            free(suffix_max);
+            return 0;
+        }
+        // обновляем prefix_min после проверки позиции i
+        if (a[i] < prefix_min) prefix_min = a[i];
+    }
+
+    printf("NO\n");
+    free(a);
+    free(suffix_max);
+    retur
+n 0;
+}
