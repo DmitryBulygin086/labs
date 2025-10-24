@@ -4,13 +4,13 @@
 
 int main(void) {
     int n;
-    // Ввод N с простой проверкой
+    // Ввод N с проверкой
     if (scanf("%d", &n) != 1) {
         fprintf(stderr, "Invalid input: expected integer N\n");
-        return 1; // можно считать это ветвлением "ошибка ввода"
+        return 1; // ошибка ввода
     }
     if (n <= 0) {
-        printf("NO\n"); // пустой/неположительный массив — условие не выполняется
+        printf("NO\n");
         return 0;
     }
 
@@ -20,17 +20,26 @@ int main(void) {
         return 1;
     }
 
-    // Чтение элементов массива с проверкой ввода
+    // Чтение ровно N элементов с проверкой "меньше / неверный формат"
     for (int i = 0; i < n; ++i) {
         if (scanf("%lld", &a[i]) != 1) {
-            fprintf(stderr, "Invalid input: expected %d integers for array\n", n);
+            fprintf(stderr, "Invalid input: expected %d integers for array (too few or wrong format)\n", n);
             free(a);
-            return 1; // ветка "ошибка ввода"
+            return 1;
         }
     }
 
-    // Построим массив suffix_max: suffix_max[i] = max of a[i+1..n-1],
-    // для позиции n-1 — будем считать "нет справа" и хранить LLONG_MIN.
+    // Проверка отсутствия лишних токенов (если есть хоть один дополнительный токен -> ошибка)
+    char extra[256];
+    int r = scanf("%255s", extra);
+    if (r == 1) {
+        fprintf(stderr, "Invalid input: expected exactly %d integers, but more were provided\n", n);
+        free(a);
+        return 1;
+    }
+    // если r == EOF — вход закончился ровно после n чисел, всё ок
+
+    // Построим suffix_max: максимум справа от i (для i = n-1 — считаем "нет справа")
     long long *suffix_max = malloc(sizeof(long long) * n);
     if (!suffix_max) {
         fprintf(stderr, "Memory allocation failed\n");
@@ -44,24 +53,23 @@ int main(void) {
         suffix_max[i] = (candidate > next) ? candidate : next;
     }
 
-    // Проход слева направо: поддерживаем prefix_min = min of a[0..i-1]
+    // Проход слева направо: prefix_min = min на левой части
     long long prefix_min = LLONG_MAX;
     for (int i = 0; i < n; ++i) {
-        int cond_left  = (i == 0) ? 1 : (a[i] < prefix_min);         // меньше всех слева (или слева нет)
-        int cond_right = (i == n-1) ? 1 : (a[i] > suffix_max[i]);   // больше всех справа (или справа нет)
+        int cond_left  = (i == 0) ? 1 : (a[i] < prefix_min);       // меньше всех слева (или слева нет)
+        int cond_right = (i == n-1) ? 1 : (a[i] > suffix_max[i]); // больше всех справа (или справа нет)
         if (cond_left && cond_right) {
             printf("YES\n%d\n", i + 1); // индекс 1-based
             free(a);
             free(suffix_max);
             return 0;
         }
-        // обновляем prefix_min после проверки позиции i
         if (a[i] < prefix_min) prefix_min = a[i];
     }
 
     printf("NO\n");
     free(a);
     free(suffix_max);
-    retur
-n 0;
+    retu
+rn 0;
 }
